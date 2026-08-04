@@ -36,7 +36,7 @@
 ### 环境要求
 
 - Python 3.9 或以上
-- SiliconFlow API Key（免费获取）
+- SiliconFlow API Key
 
 ### 安装与运行
 
