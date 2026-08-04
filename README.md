@@ -49,8 +49,8 @@ cd AI_health_chatbox
 pip install -r requirements.txt
 
 # 3. 配置环境变量
-# 在项目根目录创建 .env 文件，填入：
-# SILICONFLOW_API_KEY=你的API密钥
+# 在终端输入
+# export SILICON_API_KEY="你的API密钥"
 
 # 4. 运行应用
 python app.py
