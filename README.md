@@ -50,7 +50,7 @@ pip install -r requirements.txt
 
 # 3. 配置环境变量
 # 在终端输入
-# export SILICON_API_KEY="你的API密钥"
+# export OPENAI_API_KEY="你的API密钥"
 
 # 4. 运行应用
 python web.py
