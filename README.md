@@ -53,4 +53,4 @@ pip install -r requirements.txt
 # export SILICON_API_KEY="你的API密钥"
 
 # 4. 运行应用
-python app.py
+python web.py
