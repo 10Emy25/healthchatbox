@@ -180,7 +180,8 @@ GitHub：[你的 GitHub 链接]
 
 ---
 
-# 🇬🇧 English Version
+<a id="english-version"></a>
+# English Version
 
 > *An intelligent triage and psychological support system built with LangGraph and DeepSeek-V3 — reducing API calls to a single LLM invocation per consultation with 3x faster response time.*
 
