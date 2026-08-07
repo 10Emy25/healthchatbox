@@ -116,7 +116,7 @@ python web.py
 
 ## 🖼️ 界面预览
 
-<img width="1341" height="717" alt="截屏2026-08-07 14 44 47" src="https://github.com/user-attachments/assets/1dc59f57-bdfa-41e7-bcf6-1bdcd20b7315" />
+<img width="1336" height="747" alt="截屏2026-08-07 15 22 17" src="https://github.com/user-attachments/assets/f93ac273-3b19-481b-8fb5-f5c60175d4d5" />
 
 <!-- ![界面截图](./screenshots/demo.png) -->
 
@@ -285,8 +285,7 @@ Open `http://127.0.0.1:7860` in your browser to start using it.
 
 ## 🖼️ Interface Preview
 
-<img width="1341" height="717" alt="截屏2026-08-07 14 44 47" src="https://github.com/user-attachments/assets/1dc59f57-bdfa-41e7-bcf6-1bdcd20b7315" />
-
+<img width="1351" height="751" alt="截屏2026-08-07 15 21 37" src="https://github.com/user-attachments/assets/f8876f10-9e6a-41bb-ad53-cc46204e63e5" />
 <!-- ![Interface Screenshot](./screenshots/demo.png) -->
 
 ---
