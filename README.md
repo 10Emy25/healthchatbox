@@ -7,7 +7,7 @@
 ## 📌 目录 · Table of Contents
 
 - [中文版](#chinese-version)
-- [English Version](#english-version)
+- [English Version](./#english-version)
 
 ---
 
