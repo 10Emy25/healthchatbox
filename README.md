@@ -1,10 +1,9 @@
-```markdown
 # 🏥 AI Health Triage Assistant
 
 > *An intelligent triage and psychological support system built with LangGraph and DeepSeek-V3 — reducing API calls to a single LLM invocation per consultation with 3x faster response time.*
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
-[![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-green.svg)](https://langchain-ai.github.io/langgraph/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-latest-green.svg)](https://langchain-ai.github.io/langgraph/)
 [![Gradio](https://img.shields.io/badge/Gradio-4.0+-orange.svg)](https://gradio.app/)
 [![DeepSeek](https://img.shields.io/badge/DeepSeek-V3-purple.svg)](https://deepseek.com/)
 
@@ -32,6 +31,7 @@ This project uses **LangGraph to build deterministic workflows**, forcing the mo
 ## 🧠 System Architecture
 
 This project uses **LangGraph** to build a state machine. The core flow is as follows:
+<img width="1341" height="717" alt="截屏2026-08-07 14 44 47" src="https://github.com/user-attachments/assets/1dc59f57-bdfa-41e7-bcf6-1bdcd20b7315" />
 
 ```mermaid
 graph TD
@@ -48,7 +48,6 @@ graph TD
     Direct --> End2[Return Result]
     Format --> End2
     A5 --> End2
-```
 
 ## 🎯 Design Highlights
 
