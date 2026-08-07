@@ -174,7 +174,7 @@ AI_health_chatbox/
 ## 👩‍💻 作者
 
 **汪思言 (Emily Wang)** — 大一学生 / AI 应用开发爱好者  
-GitHub：[你的 GitHub 链接]  
+GitHub：[https://github.com/10Emy25/healthchatbox.git]  
 邮箱：[siw077@ucsd.edu]
 
 
@@ -343,7 +343,7 @@ AI_health_chatbox/
 ## 👩‍💻 Author
 
 **Emily Wang (Siyan Wang)** — First-year Undergraduate / AI Application Enthusiast  
-GitHub: [your-github-link]  
+GitHub: [https://github.com/10Emy25/healthchatbox.git]  
 Email: [siw077@ucsd.edu]
 ```
 
