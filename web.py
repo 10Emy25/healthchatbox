@@ -1,77 +1,47 @@
 import gradio as gr
-import base64
 from main import graph, ChatState
+import numpy as np
+import soundfile as sf
+import tempfile
+import os
 
+# ==================== 语音识别模块（如果不需要可删除） ====================
+# 若未安装 faster-whisper 或不想用语音，可注释掉以下导入和模型加载
+try:
+    ##from faster_whisper import WhisperModel
+    ##whisper_model = WhisperModel("tiny", device="cpu", compute_type="int8")
+    VOICE_ENABLED = False
+except ImportError:
+    VOICE_ENABLED = False
+    print("⚠️ faster-whisper 未安装，语音功能不可用")
 
-custom_css = """
-    /* 整体背景渐变 */
-    .gradio-container {
-        background: linear-gradient(145deg, #fdf6f0 0%, #f0e6de 100%);
-        font-family: 'Georgia', serif;
-    }
-    /* 聊天气泡圆润化 */
-    .message {
-        border-radius: 20px !important;
-        padding: 15px 20px !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
-    }
-    /* 用户气泡颜色（温柔奶茶色） */
-    .user .message {
-        background-color: #d4c5b2 !important;
-        color: #3d2c1e !important;
-    }
-    /* 机器人气泡颜色（奶白色） */
-    .bot .message {
-        background-color: #ffffff !important;
-        color: #4a3728 !important;
-        border: 1px solid #e8ddd0 !important;
-    }
-    /* 输入框圆角 */
-    textarea, .input-box {
-        border-radius: 30px !important;
-        border: 1px solid #dccfc3 !important;
-        background-color: #ffffff !important;
-    }
-    /* 按钮柔和 */
-    .primary {
-        background-color: #b8a08c !important;
-        color: white !important;
-        border-radius: 30px !important;
-        border: none !important;
-    }
-    .primary:hover {
-        background-color: #a0856e !important;
-    }
-"""
+def transcribe_audio(audio):
+    if not VOICE_ENABLED or audio is None:
+        return ""
+    sr_rate, y = audio
+    if y.ndim > 1:
+        y = y.mean(axis=1)
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        tmp_path = tmp.name
+        sf.write(tmp_path, y, sr_rate)
+    try:
+        segments, _ = whisper_model.transcribe(tmp_path, language="zh", beam_size=3)
+        text = " ".join([seg.text for seg in segments])
+    except Exception as e:
+        print("转写错误:", e)
+        text = ""
+    finally:
+        os.unlink(tmp_path)
+    return text
 
-    # ... 你的原有代码 ...
-# ==================== 读取本地背景图（转为 Base64） ====================
-def get_img_base64(path):
-    with open(path, "rb") as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-# 读取图片（请确保 bg.jpg 和 web.py 在同一目录）
-img_b64 = get_img_base64("bg.jpg")
-print(f"✅ 图片已加载，Base64 长度: {len(img_b64)}") 
-
-# 判断图片类型（自动检测）
-if "bg.jpg" in "bg.jpg":
-    img_type = "jpeg"
-elif "bg.png" in "bg.png":
-    img_type = "png"
-else:
-    img_type = "jpeg"  # 默认
-
-# ==================== 核心回复处理 ====================
+# ==================== 核心回复处理（与 main.py 交互） ====================
 def respond(message, history, mode):
-    """
-    message: 用户当前输入（字符串）
-    history: 对话历史（列表 of dict，含 role 和 content）
-    mode: "导诊建议" 或 "心理健康员"
-    返回 (new_history, "") ，new_history 为更新后的历史
-    """
-    # 1. 转换为 LangGraph 格式
+    # 将 Gradio 的 mode（中文或英文标签）转换为内部 mode 标识
+    if "心理" in mode or "Mental" in mode:
+        mode_flag = "1"  # 心理
+    else:
+        mode_flag = "2"  # 导诊
+
     chat_history = []
     for msg in history:
         role = msg.get("role", "")
@@ -79,7 +49,6 @@ def respond(message, history, mode):
         if content:
             chat_history.append({"role": role, "content": content})
 
-    # 2. 构建状态
     state = {
         "user_input": message,
         "chat_history": chat_history,
@@ -91,27 +60,25 @@ def respond(message, history, mode):
         "agent5_questionnum": 1,
         "final_output": None,
         "current_reply": "",
-        "mode": "1" if mode == "心理健康员" else "2"
+        "mode": mode_flag
     }
 
-    # 3. 调用 LangGraph
     try:
         final_state = graph.invoke(state, {"recursion_limit": 50})
         output = final_state.get("final_output")
         current_reply = final_state.get("current_reply")
 
-        # 4. 格式化输出
         reply_text = ""
         if output and isinstance(output, dict):
-            if "output_body" in output:          # 心理
+            if "output_body" in output:
                 reply_text = (
                     f"{output['output_body']}\n\n"
                     f"{output.get('output_advice', '')}\n\n"
                     f"{output.get('soothe_words', '')}"
                 )
-            elif "text" in output:               # 导诊
+            elif "text" in output:
                 reply_text = output["text"]
-            elif "alert_title" in output:        # 急诊
+            elif "alert_title" in output:
                 reply_text = (
                     f"🚨 {output['alert_title']}\n\n"
                     f"{output['alert_body']}\n\n"
@@ -123,9 +90,8 @@ def respond(message, history, mode):
         elif current_reply:
             reply_text = current_reply
         else:
-            reply_text = "系统暂时无法处理，请稍后再试。"
+            reply_text = "系统暂时无法处理，请稍后再试。 / System temporarily unavailable. Please try again."
 
-        # 5. 更新历史
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": reply_text})
         return history, ""
@@ -139,91 +105,133 @@ def respond(message, history, mode):
         return history, ""
 
 # ==================== 界面回调函数 ====================
-
-# 发送消息
 def send_message(message, history, mode):
     if not message.strip():
         return history, history, ""
     new_history, _ = respond(message, history, mode)
     return new_history, new_history, ""
 
-# 清空
 def clear_history():
     return [], [], ""
 
-# 切换模式
 def switch_mode(new_mode):
+    # 切换模式时清空历史
     return [], [], "", new_mode
 
-# ==================== 构建 Gradio 界面 ====================
-with gr.Blocks(css=custom_css, theme=gr.themes.Soft(primary_hue="stone")) as demo:
-    # ========== 背景图片（使用 Base64 注入） ==========
-    gr.HTML(f"""
-    <style>
-        /* 1. 设置页面背景图（覆盖整个页面） */
-        body {{
-            background-image: url('data:image/{img_type};base64,{img_b64}') !important;
-            background-size: cover !important;
-            background-position: center !important;
-            background-attachment: fixed !important;
-            background-repeat: no-repeat !important;
-        }}
-        
-        /* 2. 让 Gradio 主容器透明，露出 body 背景 */
-        .gradio-container {{
-            background: rgba(255, 255, 255, 0.88) !important;  /* 半透明白色，保证文字清晰 */
-            max-width: 100% !important;
-            margin: 0 !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-        }}
-        
-        /* 3. 其他内部组件透明 */
-        .gradio-app, .chatbot, .message {{
-            background: transparent !important;
-        }}
-        
-        /* 4. 让聊天框本身半透明更柔和 */
-        .chatbot {{
-            background: rgba(255, 255, 255, 0.5) !important;
-        }}
-    </style>
-    """)
+def process_voice(audio, history, mode):
+    if not VOICE_ENABLED:
+        return history, history, "", None
+    text = transcribe_audio(audio)
+    if not text.strip():
+        return history, history, "", None
+    # 语音识别后自动填入输入框，不自动发送（用户可编辑后手动发送）
+    return history, history, text, None
 
-    # ========== 背景音乐（轻柔钢琴曲，使用可靠直链） ==========
+# ==================== 构建 Gradio 界面 ====================
+
+# 自定义 CSS（可选），保持柔和风格
+custom_css = """
+    .gradio-container {
+        background: linear-gradient(145deg, #fdf6f0 0%, #f0e6de 100%);
+        font-family: 'Georgia', serif;
+    }
+    .message {
+        border-radius: 20px !important;
+        padding: 15px 20px !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
+    }
+    .user .message {
+        background-color: #d4c5b2 !important;
+        color: #3d2c1e !important;
+    }
+    .bot .message {
+        background-color: #ffffff !important;
+        color: #4a3728 !important;
+        border: 1px solid #e8ddd0 !important;
+    }
+    textarea, .input-box {
+        border-radius: 30px !important;
+        border: 1px solid #dccfc3 !important;
+        background-color: #ffffff !important;
+    }
+    .primary {
+        background-color: #b8a08c !important;
+        color: white !important;
+        border-radius: 30px !important;
+        border: none !important;
+    }
+    .primary:hover {
+        background-color: #a0856e !important;
+    }
+"""
+
+with gr.Blocks(css=custom_css, theme=gr.themes.Soft(primary_hue="stone")) as demo:
+    # ========== 顶部：语言切换 + 提示 ==========
+    with gr.Row():
+        lang_radio = gr.Radio(
+            choices=["中文", "English"],
+            value="中文",
+            label="🌐 界面语言 / Interface Language",
+            interactive=True
+        )
+        # 动态提示信息
+        hint_md = gr.Markdown(
+            "💬 AI 将根据您的输入语言自动回复（中/英） / AI will reply in the language you use (Chinese/English)"
+        )
+
+    # 更新提示信息
+    def update_hint(lang):
+        if lang == "中文":
+            return "💬 AI 将根据您的输入语言自动回复（中/英）"
+        else:
+            return "💬 AI will reply in the language you use (Chinese/English)"
+    lang_radio.change(update_hint, inputs=lang_radio, outputs=hint_md)
 
     # ========== 标题 ==========
     gr.Markdown("""
-    # 🏥 AI 健康导诊助手
+    # 🏥 AI 健康导诊助手 · AI Health Triage Assistant
     ### 选择模式后开始对话，切换模式会自动清空历史
+    ### Select a mode to start. Switching modes will clear history.
     """)
 
-    # ========== 工具栏 ==========
+    # ========== 模式选择和清空按钮 ==========
     with gr.Row():
         mode_radio = gr.Radio(
-            choices=["导诊建议", "心理健康员"],
-            value="导诊建议",
-            label="服务模式",
+            choices=["导诊建议 / Triage", "心理咨询 / Mental Health"],
+            value="导诊建议 / Triage",
+            label="服务模式 / Service Mode",
             interactive=True
         )
-        clear_btn = gr.Button("🗑️ 清空对话", variant="secondary")
+        clear_btn = gr.Button("🗑️ 清空对话 / Clear Chat", variant="secondary")
 
-    # ========== 聊天显示区 ==========
-    chatbot = gr.Chatbot(label="对话", height=400)
-    history_state = gr.State([])   # 存储对话历史
+    # ========== 聊天显示 ==========
+    chatbot = gr.Chatbot(label="对话 / Chat", height=400)
+    history_state = gr.State([])
 
     # ========== 输入区域 ==========
     with gr.Row():
+        # 如果有语音功能则显示音频输入，否则隐藏
+        if VOICE_ENABLED:
+            audio_input = gr.Audio(
+                sources=["microphone"],
+                type="numpy",
+                label="🎤 按住说话 / Hold to speak",
+                show_label=True,
+                scale=1
+            )
+        else:
+            audio_input = None
+
         msg_box = gr.Textbox(
-            placeholder="请输入您的症状或情绪困扰...",
+            placeholder="请输入您的症状或情绪困扰... / Enter your symptoms or concerns...",
             scale=4,
             show_label=False,
             lines=2
         )
-        send_btn = gr.Button("发送", variant="primary", scale=1)
+        send_btn = gr.Button("发送 / Send", variant="primary", scale=1)
 
     # ========== 事件绑定 ==========
-    # 文本发送（按钮 + 回车）
+    # 发送文本
     send_btn.click(
         send_message,
         inputs=[msg_box, history_state, mode_radio],
@@ -235,24 +243,32 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Soft(primary_hue="stone")) as dem
         outputs=[chatbot, history_state, msg_box]
     )
 
+    # 语音输入（如果启用）
+    if VOICE_ENABLED and audio_input is not None:
+        audio_input.stop_recording(
+            process_voice,
+            inputs=[audio_input, history_state, mode_radio],
+            outputs=[chatbot, history_state, msg_box, audio_input]
+        )
+
     # 清空对话
     clear_btn.click(
         clear_history,
         outputs=[chatbot, history_state, msg_box]
     )
 
-    # 模式切换 → 清空历史
+    # 模式切换 -> 清空历史
     mode_radio.change(
         switch_mode,
         inputs=[mode_radio],
         outputs=[chatbot, history_state, msg_box, mode_radio]
     )
 
-# ==================== 启动应用 ====================
+# ==================== 启动 ====================
 if __name__ == "__main__":
     demo.queue().launch(
         share=False,
         server_name="0.0.0.0",
         server_port=7860,
-        theme=gr.themes.Soft(primary_hue="teal")
+        theme=gr.themes.Soft(primary_hue="stone")
     )
