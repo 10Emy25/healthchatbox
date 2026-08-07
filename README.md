@@ -13,7 +13,7 @@
 
 Many people don't know which department to visit when they feel unwell. General-purpose LLMs (like directly asking DeepSeek) often give suggestions after just one or two questions — **insufficient information gathering with hallucination risks**.
 
-This project uses **LangGraph to build deterministic workflows**, forcing the model to complete multiple rounds of questioning (screening Red Flags → symptom characterization → timeline/context) before giving department recommendations. By merging Agent nodes, API calls per consultation are reduced from **3 to 1**, cutting average response time from **6~9 seconds down to 2~3 seconds**.
+This project uses **LangGraph to build deterministic workflows**, forcing the model to complete multiple rounds of questioning (screening Red Flags → symptom characterization → timeline/context) before giving department recommendations. By merging Agent nodes, API calls per consultation are reduced from **3 to 1**, cutting average response time from **6-9 seconds down to 2-3 seconds**.
 
 ---
 
@@ -31,8 +31,6 @@ This project uses **LangGraph to build deterministic workflows**, forcing the mo
 ## 🧠 System Architecture
 
 This project uses **LangGraph** to build a state machine. The core flow is as follows:
-<img width="1341" height="717" alt="截屏2026-08-07 14 44 47" src="https://github.com/user-attachments/assets/1dc59f57-bdfa-41e7-bcf6-1bdcd20b7315" />
-
 ```mermaid
 graph TD
     Start[User Input] --> Mode{Mode Routing}
@@ -97,8 +95,7 @@ Open `http://127.0.0.1:7860` in your browser to start using it.
 
 ## 🖼️ Interface Preview
 
-*(Place your Gradio interface screenshot at `screenshots/demo.png`, then uncomment the line below)*
-
+<img width="1341" height="717" alt="截屏2026-08-07 14 44 47" src="https://github.com/user-attachments/assets/1dc59f57-bdfa-41e7-bcf6-1bdcd20b7315" />
 <!-- ![Interface Screenshot](./screenshots/demo.png) -->
 
 ---
